@@ -6,7 +6,7 @@
                 "type": "text",
                 "field": "wizard_admin_username",
                 "label": "管理员账号",
-                "initValue": "admin",
+                "initValue": "",
                 "rules": [
                     {
                         "required": true,

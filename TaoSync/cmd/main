@@ -3,6 +3,7 @@
 LOG_FILE="${TRIM_PKGVAR}/info.log"
 PID_FILE="${TRIM_PKGVAR}/app.pid"
 SCRIPT_PATH="${TRIM_APPDEST}/server"
+DATA_PATH="${TRIM_PKGVAR}"
 
 
 log_msg() {
@@ -15,17 +16,9 @@ start_process() {
     fi
 
     log_msg "Starting process ..."
-    # log_msg "路径： ${SCRIPT_PATH}"
-    # log_msg "创建虚拟环境"
-    # bash -c "/usr/bin/python3 -m venv ${SCRIPT_PATH}/.venv" >> ${LOG_FILE} 2>&1
-    # log_msg "激活虚拟环境"
-    # bash -c "source ${SCRIPT_PATH}/.venv/bin/activate" >> ${LOG_FILE} 2>&1
-    # log_msg "安装离线依赖"
-    # bash -c "${SCRIPT_PATH}/.venv/bin/pip install --no-index --find-links=${SCRIPT_PATH}/wheels -r ${SCRIPT_PATH}/requirements.txt" >> ${LOG_FILE} 2>&1
-
     # run cmd to start process
     # 切换目录，确保能写入配置文件
-    bash -c "cd ${SCRIPT_PATH} && ${SCRIPT_PATH}/.venv/bin/python3 ${SCRIPT_PATH}/main.py" >> ${LOG_FILE} 2>&1 &
+    bash -c "cd ${DATA_PATH} && ${SCRIPT_PATH}/.venv/bin/python3 ${SCRIPT_PATH}/main.py" >> ${LOG_FILE} 2>&1 &
     # write pid to pidfile
     printf "%s" "$!" > ${PID_FILE}
     # log_msg "CMD = ${CMD}"

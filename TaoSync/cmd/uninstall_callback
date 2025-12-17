@@ -2,4 +2,20 @@
 
 ### This script is called after the user uninstalls the application.
 
+LOG_FILE="${TRIM_PKGVAR}/info.log"
+DATA_PATH="${TRIM_PKGVAR}"
+
+log_msg() {
+    echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" >> ${LOG_FILE}
+}
+
+if [ "$wizard_data_action" == "delete" ];then
+    log_msg "卸载用户选择删除数据"
+    bash -c "rm -rf ${DATA_PATH}" >> ${LOG_FILE} 2>&1
+else
+    log_msg "卸载用户选择保留数据"
+    log_msg "删除前端目录引用"
+    bash -c "rm -f ${DATA_PATH}/front" >> ${LOG_FILE} 2>&1
+fi
+
 exit 0

@@ -1,4 +1,4 @@
-fpk_version="build-0.2"
+fpk_version="build-0.3"
 app_version="0.3.2"
 build_all=$1
 
@@ -66,7 +66,7 @@ rsync update_admin.py "${app_script_path}/"
 
 
 build_version="${app_version}-${fpk_version}"
-sed -i "s|^[[:space:]]*version[[:space:]]*=.*|version=${app_version}|" 'TaoSync/manifest'
+sed -i "s|^[[:space:]]*version[[:space:]]*=.*|version=${build_version}|" 'TaoSync/manifest'
 echo "设置构建版本号为: ${build_version}"
 
 echo "开始打包 TaoSync.fpk"

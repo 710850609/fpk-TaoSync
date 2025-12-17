@@ -8,7 +8,7 @@ from service.system import onStart
 def update_admin(conn, user_name, password):
     cursor = conn.cursor()
     passwd = commonUtils.passwd2md5(password)
-    cursor.execute("update user_list set userName=?, passwd = ? where userName = 'admin'", (user_name, passwd, ))
+    cursor.execute("update user_list set userName=?, passwd = ?", (user_name, passwd, ))
     conn.commit()
         
     

@@ -4,6 +4,7 @@
 LOG_FILE="${TRIM_PKGVAR}/info.log"
 CFG_FILE="${TRIM_PKGVAR}/AdGuardHome.yaml"
 SCRIPT_PATH="${TRIM_APPDEST}/server"
+DATA_PATH="${TRIM_PKGVAR}"
 
 log_msg() {
     echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" >> ${LOG_FILE}
@@ -19,8 +20,11 @@ bash -c "/usr/bin/python3 -m venv ${SCRIPT_PATH}/.venv" >> ${LOG_FILE} 2>&1
 log_msg "安装离线依赖"
 bash -c "${SCRIPT_PATH}/.venv/bin/pip install --no-index --find-links=${SCRIPT_PATH}/wheels -r ${SCRIPT_PATH}/requirements.txt" >> ${LOG_FILE} 2>&1
 
+log_msg "创建前端目录引用"
+bash -c "ln -sf ${SCRIPT_PATH}/front  ${DATA_PATH}/front" >> ${LOG_FILE} 2>&1
+
 log_msg "设置admin账户: ${wizard_admin_username}"
-bash -c "cd ${SCRIPT_PATH} && ${SCRIPT_PATH}/.venv/bin/python3 ${SCRIPT_PATH}/update_admin.py ${wizard_admin_username} ${wizard_admin_password}" 2>> ${LOG_FILE} 2>&1
+bash -c "cd ${DATA_PATH} && ${SCRIPT_PATH}/.venv/bin/python3 ${SCRIPT_PATH}/update_admin.py ${wizard_admin_username} ${wizard_admin_password}" 2>> ${LOG_FILE} 2>&1
 log_msg "已设置admin账号、密码"
 
 exit 0

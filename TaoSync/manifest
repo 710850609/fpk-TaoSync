@@ -1,7 +1,7 @@
 appname               = TaoSync
-version=0.3.2
+version=0.3.2-build-0.3
 display_name          = TaoSync
-desc                  = TaoSync是一个适用于OpenList/AList v3+的自动化同步工具 </br> <a href="https://gitee.com/dr34m/taosync">gitee仓库</a> </br> <a href="https://github.com/dr34m-cn/taosync">github仓库</a>
+desc                  = <a href="https://github.com/dr34m-cn/taosync">TaoSync</a>是一个适用于OpenList/AList v3+的自动化同步工具 </br> <a href="https://github.com/710850609/fpk-TaoSync">FPK源码</a>
 arch                  = x86_64
 source                = thirdparty
 maintainer            = dr34m-cn
