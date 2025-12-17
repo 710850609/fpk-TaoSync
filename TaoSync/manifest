@@ -1,0 +1,14 @@
+appname               = TaoSync
+version=0.3.2
+display_name          = TaoSync
+desc                  = TaoSync是一个适用于OpenList/AList v3+的自动化同步工具 </br> <a href="https://gitee.com/dr34m/taosync">gitee仓库</a> </br> <a href="https://github.com/dr34m-cn/taosync">github仓库</a>
+arch                  = x86_64
+source                = thirdparty
+maintainer            = dr34m-cn
+maintainer_url        = https://github.com/dr34m-cn/taosync
+distributor           = BoB
+distributor_url       = https://club.fnnas.com/home.php?mod=space&uid=33130&do=thread&view=me&from=space
+desktop_uidir         = ui
+desktop_applaunchname = TaoSync.Application
+service_port          = 8023
+checkport             = true

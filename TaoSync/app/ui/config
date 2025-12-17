@@ -1,0 +1,13 @@
+{
+    ".url": {
+        "TaoSync.Application": {
+            "title": "TaoSync",
+            "icon": "images/icon_{0}.png",
+            "type": "url",
+            "protocol": "http",
+            "port": "8023",
+            "url": "/",
+            "allUsers": false
+        }
+    }
+}
