@@ -1,8 +1,8 @@
-fpk_version="build-0.3"
+fpk_version="4"
 app_version="0.3.2"
 build_all=$1
 
-if [ ! -d "taosync-source" ] || [ "$build_all" == 'all' ];then 
+if [ "$build_all" == 'all' ] || [ ! -d "taosync-source" ];then 
     echo "下载源码"
     zip_file="taosync.zip"
     rm -rf taosync-source
@@ -15,11 +15,15 @@ else
 fi
 
 
-if [ ! -d "taosync-source/front" ] || [ "$build_all" == 'all' ];then 
-    # 依赖node
-    node_ver=16
-    echo "设置node ${node_ver} 环境"
-    export PATH="/var/apps/nodejs_v$node_ver/target/bin:$PATH"
+if [ "$build_all" == 'all' ] || [ ! -d "taosync-source/front" ];then 
+    # 建议使用node14
+    # 检查 node 命令是否存在
+    if ! command -v node &> /dev/null; then
+        echo "当前环境未找到 node 命令，设置 node 环境..."
+        node_ver=16
+        export PATH="/var/apps/nodejs_v$node_ver/target/bin:$PATH"
+        echo "已设置 node ${node_ver} 环境"
+    fi
     echo "打包前端代码"
     cd taosync-source/frontend
     npm install && npm run build
@@ -33,7 +37,7 @@ else
 fi
 
 
-if [ ! -d "taosync-source/wheels" ] || [ "$build_all" == 'all'  ];then 
+if [ "$build_all" == 'all'  ] || [ ! -d "taosync-source/wheels" ];then 
     echo "创建并激活py虚拟环境"
     cd taosync-source
     python3 -m venv .venv

@@ -1,7 +1,23 @@
 [
     {
         "stepTitle": "管理员账户",
-        "items": [                  
+        "items": [
+            {
+                "type": "text",
+                "field": "TAO_PORT",
+                "label": "服务端口 (需要1024以上高位端口，否则权限不足)",
+                "initValue": "8023",
+                "rules": [
+                    {
+                        "required": true,
+                        "message": "请输入服务端口"
+                    },
+                    {
+                        "pattern": "^[0-9]+$",
+                        "message": "服务端口号必须是数字"
+                    }
+                ]
+            },             
             {
                 "type": "text",
                 "field": "wizard_admin_username",
