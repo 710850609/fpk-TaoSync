@@ -24,7 +24,8 @@ if [ "$build_all" == 'all' ] || [ ! -d "taosync-source/front" ];then
         export PATH="/var/apps/nodejs_v$node_ver/target/bin:$PATH"
         echo "已设置 node ${node_ver} 环境"
     fi
-    echo "打包前端代码"
+    echo "打包前端代码"    
+    sed -i "s/__version_placeholder__/$app_version/g" taosync-source/frontend/src/views/page/setting/index.vue
     cd taosync-source/frontend
     npm install && npm run build
     cd ../../
