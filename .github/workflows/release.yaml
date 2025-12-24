@@ -14,6 +14,26 @@ env:
   PYTHON_VERSION: '3.11'
 
 jobs:
+  check-arm:
+    runs-on: ubuntu-latest-arm
+    timeout-minutes: 2
+    steps:
+      - name: Check if ARM runner is available
+        run: |
+          echo "ARM runner connected!"
+          echo "Architecture: $(uname -m)"
+          echo "CPU info:"
+          lscpu || echo "lscpu not available"
+  check-arm64:
+    runs-on: ubuntu-latest-arm64
+    timeout-minutes: 2
+    steps:
+      - name: Check if ARM64 runner is available
+        run: |
+          echo "ARM64 runner connected!"
+          echo "Architecture: $(uname -m)"
+          echo "CPU info:"
+          lscpu || echo "lscpu not available"          
   # 主 job，负责设置变量
   setup:
     runs-on: ubuntu-latest
