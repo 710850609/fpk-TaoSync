@@ -36,6 +36,7 @@ jobs:
           lscpu || echo "lscpu not available"          
   # 主 job，负责设置变量
   setup:
+    needs: [check-arm, check-arm64]
     runs-on: ubuntu-latest
     outputs:
       tag: ${{ steps.set-tag.outputs.tag }}
