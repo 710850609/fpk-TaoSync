@@ -67,7 +67,7 @@ jobs:
           fi
           
           # prerelease only when tag ends with -pre
-          PRE = ${{ contains(TAG, 'dev') || contains(TAG, 'pre') || contains(TAG, 'beta') || contains(TAG, 'run') }}
+          PRE = ${{ contains($TAG, 'dev') || contains($TAG, 'pre') || contains($TAG, 'beta') || contains($TAG, 'run') }}
           # if [[ "${TAG}" =~ -pre$ ]]; then
           #   PRE=true
           # else
