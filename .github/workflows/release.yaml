@@ -66,8 +66,13 @@ jobs:
             TAG="run-${GITHUB_RUN_NUMBER}"
           fi
           
+          
           # prerelease only when tag ends with -pre
-          PRE = ${{ contains($TAG, 'dev') || contains($TAG, 'pre') || contains($TAG, 'beta') || contains($TAG, 'run') }}
+          if [ "$TAG" == run-* ] || [[ "${TAG}" == *dev* ]] || [[ "${TAG}" == *pre* ]] || [[ "${TAG}" == *beta* ]]; then
+            PRE=true
+          else
+            PRE=false
+          fi
           # if [[ "${TAG}" =~ -pre$ ]]; then
           #   PRE=true
           # else
