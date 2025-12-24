@@ -1,0 +1,409 @@
+name: Build and publish fpk for multiple architectures
+
+on:
+  push:
+    tags:
+      - '*'
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+env:
+  NODE_VERSION: "18"
+  PYTHON_VERSION: '3.11'
+  BASE_IMAGE: "ubuntu:22.04"
+
+jobs:  
+  # 主 job，负责设置变量
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.set-tag.outputs.tag }}
+      prerelease: ${{ steps.set-tag.outputs.prerelease }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set tag and prerelease info
+        id: set-tag
+        run: |
+          if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+            TAG="${GITHUB_REF##*/}"
+          else
+            TAG="run-${GITHUB_RUN_NUMBER}"
+          fi
+          
+          if [[ "$TAG" == run-* ]] || [[ "${TAG}" == *dev* ]] || [[ "${TAG}" == *pre* ]] || [[ "${TAG}" == *beta* ]]; then
+            PRE=true
+          else
+            PRE=false
+          fi
+          
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "prerelease=$PRE" >> $GITHUB_OUTPUT
+
+  # 所有架构都使用 Docker 在 x86 上构建
+  build-arch:
+    needs: setup
+    runs-on: ubuntu-latest  # 所有架构都在 x86 上运行
+    strategy:
+      matrix:
+        include:
+          - arch: amd64
+            docker_image: "amd64/ubuntu:22.04"
+            platform: "linux/amd64"
+          - arch: arm64
+            docker_image: "arm64v8/ubuntu:22.04"
+            platform: "linux/arm64/v8"
+          - arch: arm
+            docker_image: "arm32v7/ubuntu:22.04"
+            platform: "linux/arm/v7"
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup QEMU for ARM emulation
+        if: matrix.arch != 'amd64'
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: ${{ matrix.platform }}
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Show build info
+        run: |
+          echo "目标架构: ${{ matrix.arch }}"
+          echo "Docker 镜像: ${{ matrix.docker_image }}"
+          echo "平台: ${{ matrix.platform }}"
+          echo "Git 标签: ${{ needs.setup.outputs.tag }}"
+
+      - name: Create Docker build script
+        run: |
+          cat > docker-build.sh << 'EOF'
+          #!/bin/bash
+          set -e
+          
+          echo "=== 在 Docker 中构建 $BUILD_ARCH 架构 ==="
+          echo "当前架构: $(uname -m)"
+          echo "Python 版本: $(python3 --version)"
+          echo "Node 版本: $(node --version)"
+          
+          # 更新系统并安装依赖
+          apt-get update
+          apt-get install -y \
+            wget \
+            curl \
+            git \
+            build-essential \
+            python3-pip \
+            python3-dev \
+            nodejs \
+            npm \
+            pkg-config \
+            libssl-dev
+        
+          echo "环境变量:"
+          echo "BUILD_ARCH=$BUILD_ARCH"
+          echo "BUILD_TARGET=$BUILD_TARGET"
+          
+          # 执行构建脚本
+          chmod +x ./fnpack.sh 2>/dev/null || true
+          chmod +x ./build.sh 2>/dev/null || true
+          
+          if [ -f "./build.sh" ]; then
+            echo "执行构建脚本..."
+            ./build.sh all
+          else
+            echo "错误：未找到构建脚本"
+            ls -la
+            exit 1
+          fi
+          
+          # 验证构建结果
+          FPK_FILE=$(ls *.fpk 2>/dev/null | head -1)
+          if [ -z "$FPK_FILE" ]; then
+            echo "错误：未找到.fpk文件"
+            ls -la
+            exit 1
+          fi
+          
+          echo "构建完成: $FPK_FILE"
+          EOF
+          
+          chmod +x docker-build.sh
+
+      - name: Build in Docker container
+        run: |
+          echo "使用 Docker 构建 ${{ matrix.arch }} 架构"
+          
+          # 清理之前的构建文件
+          rm -f *.fpk 2>/dev/null || true
+          rm -rf release 2>/dev/null || true
+          
+          # 运行 Docker 构建
+          docker run --rm \
+            --platform ${{ matrix.platform }} \
+            -v "$PWD:/workspace" \
+            -w /workspace \
+            -e BUILD_ARCH=${{ matrix.arch }} \
+            -e BUILD_TARGET=linux-${{ matrix.arch }} \
+            -e GIT_TAG=${{ needs.setup.outputs.tag }} \
+            ${{ matrix.docker_image }} \
+            /bin/bash -c "
+              cd /workspace
+              ./docker-build.sh
+              
+              # 复制构建产物到宿主机可访问的位置
+              mkdir -p /output
+              FPK_FILE=\$(ls *.fpk 2>/dev/null | head -1)
+              if [ -n \"\$FPK_FILE\" ]; then
+                cp \"\$FPK_FILE\" /output/
+                echo \"已复制产物: \$FPK_FILE\"
+              else
+                echo '错误：未找到构建产物'
+                exit 1
+              fi
+            "
+
+      - name: Prepare artifact
+        run: |
+          echo "准备 ${{ matrix.arch }} 架构的产物"
+          
+          # 从临时输出目录获取文件
+          if [ -f "output/*.fpk" ]; then
+            FPK_FILE=$(ls output/*.fpk | head -1)
+            mkdir -p release
+            NEW_FPK_NAME="TaoSync-linux-${{ matrix.arch }}.fpk"
+            cp "$FPK_FILE" "release/$NEW_FPK_NAME"
+            
+            # 验证文件
+            echo "产物信息:"
+            file "release/$NEW_FPK_NAME" || true
+            ls -lh "release/$NEW_FPK_NAME"
+            
+            echo "准备完成: $NEW_FPK_NAME"
+          else
+            # 尝试直接查找
+            FPK_FILE=$(ls *.fpk 2>/dev/null | head -1)
+            if [ -n "$FPK_FILE" ]; then
+              mkdir -p release
+              NEW_FPK_NAME="TaoSync-linux-${{ matrix.arch }}.fpk"
+              cp "$FPK_FILE" "release/$NEW_FPK_NAME"
+              echo "准备完成: $NEW_FPK_NAME"
+            else
+              echo "错误：未找到构建产物"
+              ls -la
+              exit 1
+            fi
+          fi
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: fpk-${{ matrix.arch }}
+          path: release/
+          retention-days: 7
+
+      - name: Cleanup
+        run: |
+          rm -rf output release *.fpk docker-build.sh 2>/dev/null || true
+
+  # 备选方案：使用更轻量的方法（如果需要）
+  build-arch-simple:
+    needs: setup
+    if: ${{ failure() && needs.build-arch.result == 'failure' }}  # 只在主方案失败时运行
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - arch: amd64
+            docker_image: "node:18-bullseye"
+          - arch: arm64
+            docker_image: "arm64v8/node:18-bullseye"
+          - arch: arm
+            docker_image: "arm32v7/node:18-bullseye"
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Simple Docker build for ${{ matrix.arch }}
+        run: |
+          echo "使用简化 Docker 构建 ${{ matrix.arch }}"
+          
+          docker run --rm \
+            -v "$PWD:/app" \
+            -w /app \
+            -e BUILD_ARCH=${{ matrix.arch }} \
+            ${{ matrix.docker_image }} \
+            sh -c "
+              apt-get update && apt-get install -y python3 python3-pip wget
+              chmod +x ./fnpack.sh 2>/dev/null || true
+              chmod +x ./build.sh 2>/dev/null || true
+              if [ -f './build.sh' ]; then
+                ./build.sh all
+              fi
+              
+              # 重命名产物
+              FPK_FILE=\$(ls *.fpk 2>/dev/null | head -1)
+              if [ -n \"\$FPK_FILE\" ]; then
+                NEW_NAME=\"TaoSync-linux-${{ matrix.arch }}.fpk\"
+                mv \"\$FPK_FILE\" \"\$NEW_NAME\"
+              fi
+            "
+
+      - name: Prepare simple artifact
+        run: |
+          FPK_FILE=$(ls *.fpk 2>/dev/null | head -1)
+          if [ -n "$FPK_FILE" ]; then
+            mkdir -p release
+            cp "$FPK_FILE" "release/"
+            echo "准备完成: $FPK_FILE"
+          else
+            echo "错误：未找到产物"
+            exit 1
+          fi
+
+      - name: Upload fallback artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: fpk-${{ matrix.arch }}-fallback
+          path: release/
+
+  create-release:
+    needs: 
+      - setup
+      - build-arch
+      - build-arch-simple
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create release directory
+        run: |
+          mkdir -p combined-release
+
+      - name: Download all artifacts
+        run: |
+          echo "下载所有架构的构建产物..."
+          
+          for arch in amd64 arm arm64; do
+            echo "处理 $arch 架构..."
+            
+            # 首先尝试主构建产物
+            if actions/download-artifact@v4 --name fpk-$arch --path combined-release 2>/dev/null; then
+              echo "✓ 使用主构建产物: $arch"
+            # 然后尝试回退产物
+            elif actions/download-artifact@v4 --name fpk-$arch-fallback --path combined-release 2>/dev/null; then
+              echo "✓ 使用回退构建产物: $arch"
+            else
+              echo "✗ 警告：$arch 架构构建产物不存在"
+            fi
+            
+            sleep 1
+          done
+
+      - name: Prepare release bundle
+        run: |
+          echo "收集到的构建产物:"
+          ls -la combined-release/
+          
+          # 移动所有 .fpk 文件到根目录
+          find combined-release -name "*.fpk" -exec mv {} combined-release/ \;
+          
+          # 清理子目录
+          rm -rf combined-release/*/ 2>/dev/null || true
+          
+          # 重命名文件以确保一致性
+          for file in combined-release/*.fpk; do
+            if [ -f "$file" ]; then
+              BASENAME=$(basename "$file")
+              # 确保文件名符合我们的命名规范
+              if [[ ! "$BASENAME" =~ ^TaoSync-linux- ]]; then
+                # 从文件名提取架构信息
+                if [[ "$BASENAME" =~ linux-amd64 ]]; then
+                  NEW_NAME="TaoSync-linux-amd64.fpk"
+                elif [[ "$BASENAME" =~ linux-arm64 ]]; then
+                  NEW_NAME="TaoSync-linux-arm64.fpk"
+                elif [[ "$BASENAME" =~ linux-arm ]]; then
+                  NEW_NAME="TaoSync-linux-arm.fpk"
+                else
+                  # 无法识别，保持原名
+                  NEW_NAME="$BASENAME"
+                fi
+                mv "$file" "combined-release/$NEW_NAME"
+                echo "重命名: $BASENAME -> $NEW_NAME"
+              fi
+            fi
+          done
+          
+          echo "最终发布文件:"
+          ls -lh combined-release/
+
+      - name: Create README
+        run: |
+          cat > combined-release/README.md << EOF
+          # TaoSync 多架构发布包
+          
+          版本: ${{ needs.setup.outputs.tag }}
+          发布日期: $(date -u +"%Y-%m-%d")
+          
+          包含以下架构的软件包:
+          EOF
+          
+          # 动态添加文件列表
+          for fpk in combined-release/*.fpk; do
+            if [ -f "$fpk" ]; then
+              FNAME=$(basename "$fpk")
+              echo "- \`$FNAME\`" >> combined-release/README.md
+            fi
+          done
+          
+          cat >> combined-release/README.md << 'EOF'
+          
+          ## 如何选择
+          
+          - **x86_64/AMD64 服务器或PC**: 使用 `TaoSync-linux-amd64.fpk`
+          - **ARM64 设备 (如 Raspberry Pi 4, Apple Silicon)**: 使用 `TaoSync-linux-arm64.fpk`
+          - **ARM 32位设备 (如 Raspberry Pi 2/3)**: 使用 `TaoSync-linux-arm.fpk`
+          
+          ## 安装说明
+          
+          1. 下载适合您设备架构的文件
+          2. 上传到您的设备
+          3. 根据 TaoSync 文档进行安装
+          
+          ## 校验
+          
+          建议下载后验证文件的完整性:
+          \`\`\`bash
+          sha256sum TaoSync-*.fpk
+          \`\`\`
+          EOF
+
+      - name: Create GitHub Release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ needs.setup.outputs.tag }}
+          name: ${{ needs.setup.outputs.tag }}
+          artifacts: "combined-release/*"
+          prerelease: ${{ needs.setup.outputs.prerelease }}
+          skipIfReleaseExists: true
+          token: ${{ secrets.GITHUB_TOKEN }}
+          body: |
+            多架构发布包，支持 Linux AMD64、ARM64 和 ARM 架构。
+            
+            请根据您的设备架构选择合适的文件。
+            
+            完整说明请查看 README.md 文件。
+
+      - name: Upload release summary
+        if: always()
+        run: |
+          echo "=== 发布总结 ==="
+          echo "版本: ${{ needs.setup.outputs.tag }}"
+          echo "预发布: ${{ needs.setup.outputs.prerelease }}"
+          echo "包含的文件:"
+          ls -la combined-release/
+          echo "================"
