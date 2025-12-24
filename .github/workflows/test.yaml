@@ -128,6 +128,8 @@ jobs:
 
       - name: remove wheels 
         run: |
+          echo "当前目录$(pwd)"
+          echo "当前资源$(ls -la)"
           rm -rf taosync-source/wheels 2>/dev/null || true
 
       - name: Setup QEMU for ARM emulation
