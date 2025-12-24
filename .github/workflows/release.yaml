@@ -13,30 +13,9 @@ env:
   NODE_VERSION: "14.x"
   PYTHON_VERSION: '3.11'
 
-jobs:
-  check-arm:
-    runs-on: ubuntu-latest-arm
-    timeout-minutes: 2
-    steps:
-      - name: Check if ARM runner is available
-        run: |
-          echo "ARM runner connected!"
-          echo "Architecture: $(uname -m)"
-          echo "CPU info:"
-          lscpu || echo "lscpu not available"
-  check-arm64:
-    runs-on: ubuntu-latest-arm64
-    timeout-minutes: 2
-    steps:
-      - name: Check if ARM64 runner is available
-        run: |
-          echo "ARM64 runner connected!"
-          echo "Architecture: $(uname -m)"
-          echo "CPU info:"
-          lscpu || echo "lscpu not available"          
+jobs:  
   # 主 job，负责设置变量
   setup:
-    needs: [check-arm, check-arm64]
     runs-on: ubuntu-latest
     outputs:
       tag: ${{ steps.set-tag.outputs.tag }}
@@ -73,9 +52,9 @@ jobs:
           - arch: amd64
             runner: ubuntu-latest
           - arch: arm64
-            runner: ubuntu-latest-arm64
+            runner: linux-arm64-musl
           - arch: arm
-            runner: ubuntu-latest-arm
+            runner: linux-arm-musl
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
