@@ -96,6 +96,7 @@ jobs:
           apt-get install -y \
             wget \
             curl \
+            zip \
             git \
             build-essential \
             python3-pip \
