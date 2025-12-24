@@ -151,6 +151,8 @@ jobs:
           echo "当前架构: $(uname -m)"
           echo "Python 版本: $(python3 --version)"
           echo "Node 版本: $(node --version)"
+          echo "当前目录$(pwd)"
+          echo "当前资源$(ls -la)"
           
           # 更新系统并安装依赖
           # apt-get update
