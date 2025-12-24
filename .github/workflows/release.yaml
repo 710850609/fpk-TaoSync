@@ -12,10 +12,6 @@ permissions:
 jobs:
   build-and-release:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        arch: [amd64, aarch64]
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -30,28 +26,22 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Download and setup fnpack for ${{ matrix.arch }}
-        run: |
-          echo "下载fnpack for ${{ matrix.arch }}"
-          if [ "${{ matrix.arch }}" == "amd64" ]; then
-            wget -O fnpack "https://static2.fnnas.com/fnpack/fnpack-1.0.4-linux-amd64"
-          elif [ "${{ matrix.arch }}" == "aarch64" ]; then
-            wget -O fnpack "https://static2.fnnas.com/fnpack/fnpack-1.0.4-linux-aarch64"
-          else
-            echo "未知架构: ${{ matrix.arch }}"
-            exit 1
-          fi
-          chmod +x fnpack
-          sudo mv fnpack /usr/local/bin/
+      # - name: Download and setup fnpack
+      #   run: |
+      #     echo "下载fnpack"
+      #     wget -O fnpack "https://static2.fnnas.com/fnpack/fnpack-1.0.4-linux-amd64 "
+      #     chmod +x fnpack
+      #     # 将 fnpack 移动到可执行目录
+      #     sudo mv fnpack /usr/local/bin/
 
-      - name: Run build package for ${{ matrix.arch }}
+      - name: Run build package
         run: |
-          echo "开始构建fpk for ${{ matrix.arch }}"
+          echo "开始构建fpk"
           chmod +x ./build.sh || true
           ./build.sh all
 
       - id: package
-        name: Find and prepare .fpk file for ${{ matrix.arch }}
+        name: Find and prepare .fpk file
         run: |
           # 查找构建生成的.fpk文件
           FPK_FILE=$(ls *.fpk 2>/dev/null | head -1)
@@ -68,7 +58,7 @@ jobs:
           mkdir -p release
           
           # 复制到release目录
-          cp "$FPK_FILE" "release/TaoSync-${{ matrix.arch }}.fpk"
+          cp "$FPK_FILE" "release/TaoSync.fpk"
           
           if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
             TAG="${GITHUB_REF##*/}"
@@ -77,24 +67,25 @@ jobs:
           fi
           
           # prerelease only when tag ends with -pre
-          if [[ "${TAG}" =~ -pre$ ]]; then
-            PRE=true
-          else
-            PRE=false
-          fi
+          PRE = ${{ contains(TAG, 'dev') || contains(TAG, 'pre') || contains(TAG, 'beta') || contains(TAG, 'run') }}
+          # if [[ "${TAG}" =~ -pre$ ]]; then
+          #   PRE=true
+          # else
+          #   PRE=false
+          # fi
           
           echo "fpk_name=$FPK_FILE" >> $GITHUB_OUTPUT
           echo "tag=${TAG}" >> $GITHUB_OUTPUT
           echo "prerelease=${PRE}" >> $GITHUB_OUTPUT
-          echo "fpk_path=release/TaoSync-${{ matrix.arch }}.fpk" >> $GITHUB_OUTPUT
+          echo "fpk_path=release/$FPK_FILE" >> $GITHUB_OUTPUT
 
-      - name: Upload .fpk as workflow artifact for ${{ matrix.arch }}
+      - name: Upload .fpk as workflow artifact
         uses: actions/upload-artifact@v4
         with:
-          name: fpk-${{ matrix.arch }}
+          name: fpk
           path: "release/*.fpk"
 
-      - name: Create GitHub Release and upload asset for ${{ matrix.arch }}
+      - name: Create GitHub Release and upload asset
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ steps.package.outputs.tag }}

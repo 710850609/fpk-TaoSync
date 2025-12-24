@@ -74,7 +74,8 @@ sed -i "s|^[[:space:]]*version[[:space:]]*=.*|version=${build_version}|" 'TaoSyn
 echo "设置构建版本号为: ${build_version}"
 
 echo "开始打包 TaoSync.fpk"
-fnpack build --directory TaoSync/
+# fnpack build --directory TaoSync
+./fnpack.sh build --directory TaoSync
 
 
 fpk_name="TaoSync-${build_version}.fpk"
