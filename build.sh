@@ -26,6 +26,7 @@ if [ "$build_all" == 'all' ] || [ ! -d "taosync-source/front" ];then
     fi
     echo "打包前端代码"    
     sed -i "s/__version_placeholder__/$app_version/g" taosync-source/frontend/src/views/page/setting/index.vue
+    echo "更新前端显示版本号为: $app_version"
     cd taosync-source/frontend
     npm install && npm run build
     cd ../../

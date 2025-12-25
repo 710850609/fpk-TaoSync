@@ -46,7 +46,7 @@ fi
 
 # 第一步：压缩 app 文件夹为 app.tgz
 echo "Compressing 'app' directory to 'app.tgz'..."
-tar -czf app.tgz app/
+tar -czf app.tgz -C app .
 
 # 检查压缩是否成功
 if [ $? -ne 0 ]; then
