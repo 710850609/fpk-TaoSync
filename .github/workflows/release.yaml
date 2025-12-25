@@ -43,6 +43,7 @@ jobs:
           echo "prerelease=$PRE" >> $GITHUB_OUTPUT
 
   build-amd64:
+    needs: setup
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -62,7 +63,7 @@ jobs:
         run: |          
           chmod +x ./fnpack.sh 2>/dev/null || true
           chmod +x ./build.sh 2>/dev/null || true
-          ./build.sh pre="${needs.setup.outputs.prerelease}" 2>/dev/null || true
+          ./build.sh pre="${{ needs.setup.outputs.prerelease }}" 2>/dev/null || true
 
       - name: Prepare artifact
         run: |
@@ -155,7 +156,7 @@ jobs:
           # 执行构建脚本
           chmod +x ./fnpack.sh 2>/dev/null || true
           chmod +x ./build.sh 2>/dev/null || true
-          ./build.sh pre="${needs.setup.outputs.prerelease}" 2>/dev/null || true
+          ./build.sh pre="${PRERELEASE}" 2>/dev/null || true
           
           # 验证构建结果
           FPK_FILE=$(ls *.fpk 2>/dev/null | head -1)
@@ -177,6 +178,9 @@ jobs:
           # 清理之前的构建文件
           rm -f *.fpk 2>/dev/null || true
           rm -rf release 2>/dev/null || true
+          
+          # 设置环境变量传递给 Docker
+          export PRERELEASE="${{ needs.setup.outputs.prerelease }}"
           
           # 运行 Docker 构建
           docker run --rm \
