@@ -2,9 +2,9 @@
 
 ### This script is called after the user installs the application.
 LOG_FILE="${TRIM_PKGVAR}/info.log"
-CFG_FILE="${TRIM_PKGVAR}/AdGuardHome.yaml"
 SCRIPT_PATH="${TRIM_APPDEST}/server"
 DATA_PATH="${TRIM_PKGVAR}"
+CFG_FILE="${DATA_PATH}/data/config.ini"
 
 log_msg() {
     echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" >> ${LOG_FILE}
@@ -26,5 +26,21 @@ bash -c "ln -sf ${SCRIPT_PATH}/front  ${DATA_PATH}/front" >> ${LOG_FILE} 2>&1
 log_msg "设置admin账户: ${wizard_admin_username}"
 bash -c "cd ${DATA_PATH} && ${SCRIPT_PATH}/.venv/bin/python3 ${SCRIPT_PATH}/update_admin.py ${wizard_admin_username} ${wizard_admin_password}" 2>> ${LOG_FILE} 2>&1
 log_msg "已设置admin账号、密码"
+
+log_msg "复制默认配置"
+if [ ! -f "${CFG_FILE}" ]; then
+    bash -c "cp ${SCRIPT_PATH}/config.ini ${CFG_FILE}" >> ${LOG_FILE} 2>&1
+    log_msg "已复制默认配置文件到 ${CFG_FILE}"
+else
+    log_msg "配置文件已存在，跳过复制默认配置"
+fi
+
+# 修改配置文件中的端口号
+log_msg "修改配置文件中的端口: ${TAO_PORT}"
+sed -i "s|^[[:space:]]*port[[:space:]]*=.*|port=${TAO_PORT}|" "${CFG_FILE}"
+
+# 修改配置文件中的任务超时时间
+log_msg "修改配置文件中的任务超时时间: ${TAO_TASK_TIMEOUT}"
+sed -i "s|^[[:space:]]*task_timeout[[:space:]]*=.*|task_timeout=${TAO_TASK_TIMEOUT}|" "${CFG_FILE}"
 
 exit 0

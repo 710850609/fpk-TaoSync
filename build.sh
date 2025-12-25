@@ -1,3 +1,7 @@
+build_version="5"
+app_version="0.3.2"
+
+
 declare -A PARAMS
 
 # 默认值
@@ -26,8 +30,6 @@ done
 echo "build_all: ${PARAMS[build_all]}"
 echo "pre: ${PARAMS[pre]}"
 
-build_version="5"
-app_version="0.3.2"
 build_all="${PARAMS[build_all]}"
 build_pre="${PARAMS[pre]}"
 
@@ -97,8 +99,9 @@ rsync -a \
     --exclude='dockerfiles' \
     --exclude='frontend' \
     --exclude='README' \
-    taosync-source/  "${app_script_path}/"    
-rsync update_admin.py "${app_script_path}/"
+    taosync-source/  "${app_script_path}/"  || exit 1
+rsync update_admin.py "${app_script_path}/" || exit 1
+rsync -a taosync-source/doc/config.ini "${app_script_path}/config.ini" || exit 1
 
 
 fpk_version="${app_version}-${build_version}"

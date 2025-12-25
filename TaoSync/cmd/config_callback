@@ -2,4 +2,19 @@
 
 ### This script is called after the user change environment variables in application setting page.
 
+DATA_PATH="${TRIM_PKGVAR}"
+CFG_FILE="${DATA_PATH}/data/config.ini"
+
+log_msg() {
+    echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" >> ${LOG_FILE}
+}
+
+# 修改配置文件中的端口号
+log_msg "修改配置文件中的端口: ${TAO_PORT}"
+sed -i "s|^[[:space:]]*port[[:space:]]*=.*|port=${TAO_PORT}|" "${CFG_FILE}"
+
+# 修改配置文件中的任务超时时间
+log_msg "修改配置文件中的任务超时时间: ${TAO_TASK_TIMEOUT}"
+sed -i "s|^[[:space:]]*task_timeout[[:space:]]*=.*|task_timeout=${TAO_TASK_TIMEOUT}|" "${CFG_FILE}"
+
 exit 0
