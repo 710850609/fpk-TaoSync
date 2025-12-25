@@ -63,7 +63,7 @@ jobs:
         run: |          
           chmod +x ./fnpack.sh 2>/dev/null || true
           chmod +x ./build.sh 2>/dev/null || true
-          ./build.sh pre="${{ needs.setup.outputs.prerelease }}" 2>/dev/null || true
+          ./build.sh  arch=linux-amd64 build_pre="${{ needs.setup.outputs.prerelease }}" 2>/dev/null || true
 
       - name: Prepare artifact
         run: |
@@ -82,7 +82,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: fpk-amd64
+          name: fpk-linux-amd64
           path: release/
           retention-days: 1
 
@@ -102,7 +102,7 @@ jobs:
     strategy:
       matrix:
         include:
-          - arch: arm64
+          - arch: linux-arm64
             docker_image: "arm64v8/python:3.11"
             platform: "linux/arm64/v8"
           # - arch: arm
@@ -156,7 +156,7 @@ jobs:
           # 执行构建脚本
           chmod +x ./fnpack.sh 2>/dev/null || true
           chmod +x ./build.sh 2>/dev/null || true
-          ./build.sh pre="${PRERELEASE}" 2>/dev/null || true
+          ./build.sh  arch=${ARCH} build_pre="${PRERELEASE}" 2>/dev/null || true
           
           # 验证构建结果
           FPK_FILE=$(ls *.fpk 2>/dev/null | head -1)
@@ -178,13 +178,12 @@ jobs:
           # 清理之前的构建文件
           rm -f *.fpk 2>/dev/null || true
           rm -rf release 2>/dev/null || true
-          
-          # 设置环境变量传递给 Docker
-          export PRERELEASE="${{ needs.setup.outputs.prerelease }}"
 
           # 运行 Docker 构建
           docker run --rm \
             --platform ${{ matrix.platform }} \
+            -e "PRERELEASE=${{ needs.setup.outputs.prerelease }}" \
+            -e "ARCH=${{ matrix.arch }}" \
             -v "$PWD:/workspace" \
             -w /workspace \
             ${{ matrix.docker_image }} \
@@ -207,33 +206,23 @@ jobs:
       - name: Prepare artifact
         run: |
           echo "准备 ${{ matrix.arch }} 架构的产物"
-          
-          # 从临时输出目录获取文件
-          if [ -f "output/*.fpk" ]; then
-            FPK_FILE=$(ls output/*.fpk | head -1)
-            mkdir -p release
-            NEW_FPK_NAME="TaoSync-linux-${{ matrix.arch }}.fpk"
-            cp "$FPK_FILE" "release/$NEW_FPK_NAME"
-            
-            # 验证文件
-            echo "产物信息:"
-            file "release/$NEW_FPK_NAME" || true
-            ls -lh "release/$NEW_FPK_NAME"
-            
-            echo "准备完成: $NEW_FPK_NAME"
+
+          FPK_FILE=$(ls *.fpk 2>/dev/null | head -1)
+          if [ -z "$FPK_FILE" ]; then
+            echo "错误：未找到.fpk文件"
+            ls -la
+            exit 1
+          fi
+
+          mkdir -p release
+          if [ "${{ needs.setup.outputs.prerelease }}" == "true" ]; then
+            cp "$FPK_FILE" "release/$FPK_FILE"
+            echo "准备完成: $FPK_FILE"
           else
-            # 尝试直接查找
-            FPK_FILE=$(ls *.fpk 2>/dev/null | head -1)
-            if [ -n "$FPK_FILE" ]; then
-              mkdir -p release
-              NEW_FPK_NAME="TaoSync-linux-${{ matrix.arch }}.fpk"
-              cp "$FPK_FILE" "release/$NEW_FPK_NAME"
-              echo "准备完成: $NEW_FPK_NAME"
-            else
-              echo "错误：未找到构建产物"
-              ls -la
-              exit 1
-            fi
+            # 正式版去除版本号
+            NEW_FPK_NAME="TaoSync-${{ matrix.arch }}.fpk"
+            cp "$FPK_FILE" "release/$NEW_FPK_NAME"
+            echo "准备完成: $NEW_FPK_NAME"
           fi
 
       - name: Upload artifact
@@ -260,19 +249,13 @@ jobs:
       - name: Download amd64 artifact
         uses: actions/download-artifact@v4
         with:
-          name: fpk-amd64
+          name: fpk-linux-amd64
           path: combined-release
-
-      # - name: Download arm artifact
-      #   uses: actions/download-artifact@v4
-      #   with:
-      #     name: fpk-arm
-      #     path: combined-release
 
       - name: Download arm64 artifact
         uses: actions/download-artifact@v4
         with:
-          name: fpk-arm64
+          name: fpk-linux-arm64
           path: combined-release
 
       - name: Create GitHub Release

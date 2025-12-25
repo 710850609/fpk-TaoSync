@@ -6,7 +6,8 @@ declare -A PARAMS
 
 # 默认值
 PARAMS[build_all]="false"
-PARAMS[pre]="false"
+PARAMS[build_pre]="false"
+PARAMS[arch]="linux-amd64"
 
 # 解析 key=value 格式的参数
 for arg in "$@"; do
@@ -18,7 +19,7 @@ for arg in "$@"; do
     # 处理标志参数
     case "$arg" in
       --pre)
-        PARAMS[pre]="true"
+        PARAMS[build_pre]="true"
         ;;
       *)
         echo "忽略未知参数: $arg"
@@ -27,11 +28,13 @@ for arg in "$@"; do
   fi
 done
 
-echo "build_all: ${PARAMS[build_all]}"
-echo "pre: ${PARAMS[pre]}"
 
 build_all="${PARAMS[build_all]}"
-build_pre="${PARAMS[pre]}"
+build_pre="${PARAMS[build_pre]}"
+arch="${PARAMS[arch]}"
+echo "build_all: ${build_all}"
+echo "build_pre: ${build_pre}"
+echo "arch: ${arch}"
 
 
 if [ "$build_all" == 'true' ] || [ ! -d "taosync-source" ];then 
@@ -111,12 +114,24 @@ fi
 sed -i "s|^[[:space:]]*version[[:space:]]*=.*|version=${fpk_version}|" 'TaoSync/manifest'
 echo "设置构建版本号为: ${fpk_version}"
 
+# platform 取值 x86, arm, all
+platform="all"
+if [ "${arch}" == "linux-amd64" ]; then
+    platform="x86"
+elif [ "${arch}" == "linux-arm64" ]; then
+    platform="arm"
+else
+    echo "未知的 arch 参数，使用默认值: ${arch}"
+fi
+echo "设置 platform 为: ${platform}"
+sed -i "s|^[[:space:]]*platform[[:space:]]*=.*|platform=${platform}|" 'OpenList/manifest'
+
 echo "开始打包 TaoSync.fpk"
 # fnpack build --directory TaoSync
 ./fnpack.sh build --directory TaoSync
 
 
-fpk_name="TaoSync-${fpk_version}.fpk"
+fpk_name="TaoSync-${arch}-${fpk_version}.fpk"
 rm -f "${fpk_name}"
 mv TaoSync.fpk "${fpk_name}"
 echo "打包完成: ${fpk_name}"
