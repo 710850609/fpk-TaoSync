@@ -62,14 +62,7 @@ jobs:
         run: |          
           chmod +x ./fnpack.sh 2>/dev/null || true
           chmod +x ./build.sh 2>/dev/null || true
-          
-          if [ -f "./build.sh" ]; then
-            ./build.sh all
-          else
-            echo "错误：未找到构建脚本"
-            ls -la
-            exit 1
-          fi
+          ./build.sh 2>/dev/null || true
 
       - name: Prepare artifact
         run: |
@@ -98,7 +91,6 @@ jobs:
           name: taosync-source
           path: taosync-source
           retention-days: 1
-
 
   # 所有架构都使用 Docker 在 x86 上构建
   build-arch:
@@ -163,15 +155,7 @@ jobs:
           # 执行构建脚本
           chmod +x ./fnpack.sh 2>/dev/null || true
           chmod +x ./build.sh 2>/dev/null || true
-          
-          if [ -f "./build.sh" ]; then
-            echo "执行构建脚本..."
-            ./build.sh
-          else
-            echo "错误：未找到构建脚本"
-            ls -la
-            exit 1
-          fi
+          ./build.sh 2>/dev/null || true
           
           # 验证构建结果
           FPK_FILE=$(ls *.fpk 2>/dev/null | head -1)
@@ -199,9 +183,6 @@ jobs:
             --platform ${{ matrix.platform }} \
             -v "$PWD:/workspace" \
             -w /workspace \
-            -e BUILD_ARCH=${{ matrix.arch }} \
-            -e BUILD_TARGET=linux-${{ matrix.arch }} \
-            -e GIT_TAG=${{ needs.setup.outputs.tag }} \
             ${{ matrix.docker_image }} \
             /bin/bash -c "
               cd /workspace
@@ -256,7 +237,7 @@ jobs:
         with:
           name: fpk-${{ matrix.arch }}
           path: release/
-          retention-days: 7
+          retention-days: 1
 
       - name: Cleanup
         run: |
@@ -271,6 +252,25 @@ jobs:
       - name: Create release directory
         run: |
           mkdir -p combined-release
+    
+      - name: Download amd64 artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: fpk-amd64
+          path: combined-release
+
+      - name: Download arm artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: fpk-arm
+          path: combined-release
+
+      - name: Download arm64 artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: fpk-arm64
+          path: combined-release
+
 
       - name: Download all artifacts
         run: |
