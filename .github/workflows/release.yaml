@@ -105,9 +105,9 @@ jobs:
           - arch: arm64
             docker_image: "arm64v8/python:3.11"
             platform: "linux/arm64/v8"
-          - arch: arm
-            docker_image: "arm32v7/python:3.11"
-            platform: "linux/arm/v7"
+          # - arch: arm
+          #   docker_image: "arm32v7/python:3.11"
+          #   platform: "linux/arm/v7"
     
     steps:
       - name: Checkout repository
@@ -181,7 +181,7 @@ jobs:
           
           # 设置环境变量传递给 Docker
           export PRERELEASE="${{ needs.setup.outputs.prerelease }}"
-          
+
           # 运行 Docker 构建
           docker run --rm \
             --platform ${{ matrix.platform }} \
@@ -263,11 +263,11 @@ jobs:
           name: fpk-amd64
           path: combined-release
 
-      - name: Download arm artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: fpk-arm
-          path: combined-release
+      # - name: Download arm artifact
+      #   uses: actions/download-artifact@v4
+      #   with:
+      #     name: fpk-arm
+      #     path: combined-release
 
       - name: Download arm64 artifact
         uses: actions/download-artifact@v4
