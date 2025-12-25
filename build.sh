@@ -1,8 +1,38 @@
-fpk_version="4"
-app_version="0.3.2"
-build_all=$1
+declare -A PARAMS
 
-if [ "$build_all" == 'all' ] || [ ! -d "taosync-source" ];then 
+# 默认值
+PARAMS[build_all]="false"
+PARAMS[pre]="false"
+
+# 解析 key=value 格式的参数
+for arg in "$@"; do
+  if [[ "$arg" == *=* ]]; then
+    key="${arg%%=*}"
+    value="${arg#*=}"
+    PARAMS["$key"]="$value"
+  else
+    # 处理标志参数
+    case "$arg" in
+      --pre)
+        PARAMS[pre]="true"
+        ;;
+      *)
+        echo "忽略未知参数: $arg"
+        ;;
+    esac
+  fi
+done
+
+echo "build_all: ${PARAMS[build_all]}"
+echo "pre: ${PARAMS[pre]}"
+
+build_version="5"
+app_version="0.3.2"
+build_all="${PARAMS[build_all]}"
+build_pre="${PARAMS[pre]}"
+
+
+if [ "$build_all" == 'true' ] || [ ! -d "taosync-source" ];then 
     echo "下载源码"
     zip_file="taosync.zip"
     rm -rf taosync-source
@@ -15,7 +45,7 @@ else
 fi
 
 
-if [ "$build_all" == 'all' ] || [ ! -d "taosync-source/front" ];then 
+if [ "$build_all" == 'true' ] || [ ! -d "taosync-source/front" ];then 
     # 建议使用node14
     # 检查 node 命令是否存在
     if ! command -v node &> /dev/null; then
@@ -71,16 +101,19 @@ rsync -a \
 rsync update_admin.py "${app_script_path}/"
 
 
-build_version="${app_version}-${fpk_version}"
-sed -i "s|^[[:space:]]*version[[:space:]]*=.*|version=${build_version}|" 'TaoSync/manifest'
-echo "设置构建版本号为: ${build_version}"
+fpk_version="${app_version}-${build_version}"
+if [ "$build_pre" == 'true' ];then 
+    fpk_version="${fpk_version}-pre"
+fi
+sed -i "s|^[[:space:]]*version[[:space:]]*=.*|version=${fpk_version}|" 'TaoSync/manifest'
+echo "设置构建版本号为: ${fpk_version}"
 
 echo "开始打包 TaoSync.fpk"
 # fnpack build --directory TaoSync
 ./fnpack.sh build --directory TaoSync
 
 
-fpk_name="TaoSync-${build_version}.fpk"
+fpk_name="TaoSync-${fpk_version}.fpk"
 rm -f "${fpk_name}"
 mv TaoSync.fpk "${fpk_name}"
 echo "打包完成: ${fpk_name}"

@@ -62,7 +62,7 @@ jobs:
         run: |          
           chmod +x ./fnpack.sh 2>/dev/null || true
           chmod +x ./build.sh 2>/dev/null || true
-          ./build.sh 2>/dev/null || true
+          ./build.sh pre="${needs.setup.outputs.prerelease}" 2>/dev/null || true
 
       - name: Prepare artifact
         run: |
@@ -155,7 +155,7 @@ jobs:
           # 执行构建脚本
           chmod +x ./fnpack.sh 2>/dev/null || true
           chmod +x ./build.sh 2>/dev/null || true
-          ./build.sh 2>/dev/null || true
+          ./build.sh pre="${needs.setup.outputs.prerelease}" 2>/dev/null || true
           
           # 验证构建结果
           FPK_FILE=$(ls *.fpk 2>/dev/null | head -1)

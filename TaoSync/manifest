@@ -1,5 +1,5 @@
 appname               = TaoSync
-version=0.3.2-4
+version=0.3.2-5
 display_name          = TaoSync
 desc                  = <a href="https://github.com/dr34m-cn/taosync">TaoSync</a>是一个适用于OpenList/AList v3+的自动化同步工具 </br>
 arch                  = x86_64

@@ -1,0 +1,38 @@
+[
+    {
+        "stepTitle": "运行配置",
+        "items": [
+            {
+                "type": "text",
+                "field": "TAO_PORT",
+                "label": "服务端口 (需要1024以上高位端口，否则权限不足)",
+                "rules": [
+                    {
+                        "required": true,
+                        "message": "请输入服务端口"
+                    },
+                    {
+                        "pattern": "^[0-9]+$",
+                        "message": "服务端口号必须是数字"
+                    }
+                ]
+            },
+            {
+                "type": "text",
+                "field": "TAO_TASK_TIMEOUT",
+                "label": "任务执行超时时间(单位小时)",
+                "initValue": "72",
+                "rules": [
+                    {
+                        "required": true,
+                        "message": "请输入任务执行超时时间"
+                    },
+                    {
+                        "pattern": "^[0-9]+$",
+                        "message": "任务执行超时时间必须是数字"
+                    }
+                ]
+            }
+        ]
+    }
+]
