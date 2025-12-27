@@ -1,4 +1,4 @@
-build_version="5"
+build_version="6"
 app_version="0.3.2"
 
 
