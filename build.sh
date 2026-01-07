@@ -1,5 +1,5 @@
 build_version=7
-app_version=0.3.2
+app_version=$(curl -s https://api.github.com/repos/dr34m-cn/taosync/releases/latest | jq -r .tag_name | sed 's/^v//')
 
 
 declare -A PARAMS
@@ -37,6 +37,21 @@ echo "build_pre: ${build_pre}"
 echo "arch: ${arch}"
 
 
+if [ -d "taosync-source" ];then 
+    # 读已下载源码中的版本
+    versions=$(head -n 1 taosync-source/version.txt)
+    tagList=""
+    IFS=',' read -ra versionList <<< "$versions"
+    cuVersion="${versionList[0]#v}"
+    echo "已下载源码版本: $cuVersion"
+    echo "最新版本: $app_version"
+    if [[ "$cuVersion" < "$app_version" ]]; then
+        echo "已下载源码版本小于最新版本，删除后重新下载"
+        rm -rf taosync-source
+    else
+        echo "源码版本与目标版本相同"
+    fi
+fi
 if [ "$build_all" == 'true' ] || [ ! -d "taosync-source" ];then 
     echo "下载源码"
     zip_file="taosync.zip"
