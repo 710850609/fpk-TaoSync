@@ -1,1 +1,1 @@
-rm -rf /vol1/@appdata/TaoSync && cd TaoSync && sudo appcenter-cli install-local --env ../config.env && cd ../
+cd TaoSync && sudo appcenter-cli install-local --env ../config.env && cd ../

@@ -1,5 +1,5 @@
-build_version="6"
-app_version="0.3.2"
+build_version=7
+app_version=0.3.2
 
 
 declare -A PARAMS
@@ -124,7 +124,7 @@ else
     echo "未知的 arch 参数，使用默认值: ${arch}"
 fi
 echo "设置 platform 为: ${platform}"
-sed -i "s|^[[:space:]]*platform[[:space:]]*=.*|platform=${platform}|" 'OpenList/manifest'
+sed -i "s|^[[:space:]]*platform[[:space:]]*=.*|platform=${platform}|" 'TaoSync/manifest'
 
 echo "开始打包 TaoSync.fpk"
 # fnpack build --directory TaoSync

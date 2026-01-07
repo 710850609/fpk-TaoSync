@@ -9,9 +9,42 @@ log_msg() {
     echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" >> ${LOG_FILE}
 }
 
-# 修改配置文件中的端口号
-log_msg "修改配置文件中的端口: ${TAO_PORT}"
-sed -i "s|^[[:space:]]*port[[:space:]]*=.*|port=${TAO_PORT}|" "${CFG_FILE}"
+check_port_in_use() {
+    local port=$1
+    # Linux 用 ss，没有 ss 再用 netstat
+    if command -v ss >/dev/null 2>&1; then
+        ss -tln | grep -q ":$port "
+    elif command -v netstat >/dev/null 2>&1; then
+        netstat -tln | grep -q ":$port "
+    else
+        # 都检测不到就保守一点：当“未占用”继续往下走
+        return 1
+    fi
+}
+
+
+CUR_PORT=$(sed -n 's/^[[:space:]]*port[[:space:]]*=[[:space:]]*\([^#[:space:]]*\).*/\1/p' "${CFG_FILE}" | head -n1)
+if [[ "$CUR_PORT" == "$TAO_PORT" ]]; then
+    log_msg "端口相同，跳过修改"
+else
+    log_msg "当前端口: ${CUR_PORT}, 目标端口: ${TAO_PORT}"
+    if [ "$TAO_PORT" -lt 1024 ]; then
+        log_msg "目标端口 $TAO_PORT 小于 1024，属于系统保留端口，请选择 1024–65535 之间的端口"
+        echo "端口 $TAO_PORT 为系统保留端口，请选择 1024–65535 之间的端口" > "${TRIM_TEMP_LOGFILE}"
+        exit 1
+    fi
+    # 检查目标端口是否被占用
+    if check_port_in_use "$TAO_PORT"; then
+        log_msg "目标端口 $TAO_PORT 已被占用"
+        # 在应用启动、安装、更新等过程中遇到错误时，可以向 TRIM_TEMP_LOGFILE 写入错误信息，然后退出脚本并返回错误码 1
+        # 系统会自动将错误日志在前端展示为用户可见的内容（Dialog对话框形式）
+        echo "端口 $TAO_PORT 已被占用，请改用其他端口" > "${TRIM_TEMP_LOGFILE}"
+        exit 1
+    fi
+    # 修改配置文件中的端口号
+    log_msg "修改配置文件中的端口: ${TAO_PORT}"
+    sed -i "s|^[[:space:]]*port[[:space:]]*=.*|port=${TAO_PORT}|" "${CFG_FILE}"
+fi
 
 # 修改配置文件中的任务超时时间
 log_msg "修改配置文件中的任务超时时间: ${TAO_TASK_TIMEOUT}"

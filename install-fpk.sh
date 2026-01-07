@@ -1,1 +1,1 @@
-ls *.fpk 2>/dev/null | head -1 | xargs -I {} sudo appcenter-cli install-fpk {} --env config.env
+ls *.fpk 2>/dev/null | sort -V | tail -n 1 | xargs -I {} sudo appcenter-cli install-fpk {} --env config.env
