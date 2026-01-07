@@ -1,4 +1,4 @@
-name: Build and publish fpk for multiple architectures
+name: Release fpk
 
 on:
   push:
@@ -29,6 +29,10 @@ jobs:
         run: |
           if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
             TAG="${GITHUB_REF##*/}"
+          elif [[ "${GITHUB_REF}" == refs/heads/main ]]; then
+            TaoSyncVersion=$(curl -s https://api.github.com/repos/dr34m-cn/taosync/releases/latest | jq -r .tag_name | sed 's/^v//')
+            BuildVersion=$(sed -n 's/^[[:space:]]*build_version[[:space:]]*=[[:space:]]*\([^#[:space:]]*\).*/\1/p' "build.sh" | head -n1)
+            TAG="release/${TaoSyncVersion}-${BuildVersion}"
           else
             TAG="run-${GITHUB_RUN_NUMBER}"
           fi
@@ -261,8 +265,8 @@ jobs:
       - name: Create GitHub Release
         uses: ncipollo/release-action@v1
         with:
-          tag: ${{ needs.setup.outputs.tag }}
           name: ${{ needs.setup.outputs.tag }}
+          tag: ${{ needs.setup.outputs.tag }}
           artifacts: "combined-release/*"
           prerelease: ${{ needs.setup.outputs.prerelease }}
           skipIfReleaseExists: true
