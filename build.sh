@@ -1,4 +1,4 @@
-build_version=7
+build_version=8
 app_version=$(curl -s https://api.github.com/repos/dr34m-cn/taosync/releases/latest | jq -r .tag_name | sed 's/^v//')
 
 
