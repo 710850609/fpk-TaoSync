@@ -20,7 +20,7 @@
             {
                 "type": "text",
                 "field": "TAO_TASK_TIMEOUT",
-                "label": "任务超时时间(单位小时)",
+                "label": "任务超时时间",
                 "initValue": "72",
                 "rules": [
                     {
@@ -32,6 +32,108 @@
                         "message": "任务执行超时时间必须是正数"
                     }
                 ]
+            },
+            {
+                "type": "tips",
+                "helpText": "单位小时。如果网速慢，文件多、大，需要设置长一点"
+            },
+            {
+                "type": "text",
+                "field": "TAO_EXPIRES",
+                "label": "登录有效期",
+                "initValue": "30",
+                "rules": [
+                    {
+                        "required": true,
+                        "message": "请输入登录有效期"
+                    },
+                    {
+                        "pattern": "^[1-9]\\d*$",
+                        "message": "登录有效期必须是正数"
+                    }
+                ]
+            },
+            {
+                "type": "tips",
+                "helpText": "单位天"
+            },
+            {
+                "type": "select",
+                "field": "TAO_LOG_LEVEL",
+                "label": "日志等级",
+                "initValue": "1",
+                "options": [
+                    {
+                        "label": "DEBUG",
+                        "value": "0"
+                    },
+                    {
+                        "label": "INFO",
+                        "value": "1"
+                    },
+                    {
+                        "label": "WARNING",
+                        "value": "2"
+                    },
+                    {
+                        "label": "ERROR",
+                        "value": "3"
+                    },
+                    {
+                        "label": "CRITICAL",
+                        "value": "4"
+                    }
+                ],
+                "rules": [
+                    {
+                        "required": true,
+                        "message": "请选择日志等级"
+                    }
+                ]
+            },
+            {
+                "type": "tips",
+                "helpText": "按顺序依次产生的日志越少，推荐INFO或WARNING: DEBUG > INFO > WARNING > ERROR > CRITICAL"
+            },
+            {
+                "type": "text",
+                "field": "TAO_LOG_SAVE",
+                "label": "日志保留天数",
+                "initValue": "7",
+                "rules": [
+                    {
+                        "required": true,
+                        "message": "请输入日志保留天数"
+                    },
+                    {
+                        "pattern": "^[0-9]\\d*$",
+                        "message": "日志保留天数必须是正数"
+                    }
+                ]
+            },
+            {
+                "type": "tips",
+                "helpText": "该天数之前的日志会自动清理，单位天，0表示不自动清理"
+            },
+            {
+                "type": "text",
+                "field": "TAO_TASK_SAVE",
+                "label": "任务记录保留天数",
+                "initValue": "0",
+                "rules": [
+                    {
+                        "required": true,
+                        "message": "请输入任务记录保留天数"
+                    },
+                    {
+                        "pattern": "^[0-9]\\d*$",
+                        "message": "任务记录保留天数必须是正数"
+                    }
+                ]
+            },
+            {
+                "type": "tips",
+                "helpText": "该天数之前的记录会自动清理，单位天，0表示不自动清理"
             }
         ]
     }

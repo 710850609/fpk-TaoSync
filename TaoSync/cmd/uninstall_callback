@@ -2,12 +2,14 @@
 
 ### This script is called after the user uninstalls the application.
 
-LOG_FILE="${TRIM_PKGVAR}/info.log"
-DATA_PATH="${TRIM_PKGVAR}"
+source "$(dirname ${BASH_SOURCE[0]})/common"
 
-log_msg() {
-    echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" >> ${LOG_FILE}
-}
+# LOG_FILE="${TRIM_PKGVAR}/info.log"
+# DATA_PATH="${TRIM_PKGVAR}"
+
+# log_msg() {
+#     echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" >> ${LOG_FILE}
+# }
 
 if [ "$wizard_data_action" == "delete" ];then
     log_msg "卸载用户选择删除数据"
