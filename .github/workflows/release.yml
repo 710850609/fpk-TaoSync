@@ -158,6 +158,9 @@ jobs:
           apt-get update
           apt-get install -y \
             rsync \
+            curl \
+            jq \
+            sed \
             python3-pip
           
           # 执行构建脚本
