@@ -235,7 +235,7 @@ jobs:
           #   NEW_FPK_NAME="TaoSync-${{ matrix.arch }}.fpk"
           #   cp "$FPK_FILE" "release/$NEW_FPK_NAME"
           #   echo "准备完成: $NEW_FPK_NAME"
-          fi
+          # fi
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
