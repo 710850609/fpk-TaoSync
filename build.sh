@@ -1,4 +1,4 @@
-build_version=8
+build_version=9
 app_version=$(curl -s https://api.github.com/repos/dr34m-cn/taosync/releases/latest | jq -r .tag_name | sed 's/^v//')
 
 
@@ -130,10 +130,10 @@ sed -i "s|^[[:space:]]*version[[:space:]]*=.*|version=${fpk_version}|" 'TaoSync/
 echo "设置构建版本号为: ${fpk_version}"
 
 # platform 取值 x86, arm, all
-platform="all"
-if [ "${arch}" == "linux-amd64" ]; then
+platform="x86"
+if [ "${arch}" == "x86" ]; then
     platform="x86"
-elif [ "${arch}" == "linux-arm64" ]; then
+elif [ "${arch}" == "arm" ]; then
     platform="arm"
 else
     echo "未知的 arch 参数，使用默认值: ${arch}"
@@ -146,7 +146,7 @@ echo "开始打包 TaoSync.fpk"
 ./fnpack.sh build --directory TaoSync
 
 
-fpk_name="TaoSync-${arch}-${fpk_version}.fpk"
+fpk_name="TaoSync-${fpk_version}-${arch}.fpk"
 rm -f "${fpk_name}"
 mv TaoSync.fpk "${fpk_name}"
 echo "打包完成: ${fpk_name}"

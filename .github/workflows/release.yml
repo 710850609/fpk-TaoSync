@@ -69,7 +69,7 @@ jobs:
         run: |          
           chmod +x ./fnpack.sh 2>/dev/null || true
           chmod +x ./build.sh 2>/dev/null || true
-          ./build.sh  arch=linux-amd64 build_pre="${{ needs.setup.outputs.prerelease }}" 2>/dev/null || true
+          ./build.sh  arch=x86 build_pre="${{ needs.setup.outputs.prerelease }}" 2>/dev/null || true
 
       - name: Prepare artifact
         run: |
@@ -81,14 +81,15 @@ jobs:
           fi
           
           mkdir -p release
-          NEW_FPK_NAME="TaoSync-linux-amd64.fpk"
-          cp "$FPK_FILE" "release/$NEW_FPK_NAME"
-          echo "准备完成: $NEW_FPK_NAME"
+          # NEW_FPK_NAME="TaoSync-linux-amd64.fpk"
+          # cp "$FPK_FILE" "release/$NEW_FPK_NAME"
+          cp "$FPK_FILE" "release/$FPK_FILE"
+          echo "准备完成: $FPK_FILE"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: fpk-linux-amd64
+          name: fpk-amd64
           path: release/
           retention-days: 1
 
@@ -108,7 +109,7 @@ jobs:
     strategy:
       matrix:
         include:
-          - arch: linux-arm64
+          - arch: arm
             docker_image: "arm64v8/python:3.11"
             platform: "linux/arm64/v8"
           # - arch: arm
@@ -224,11 +225,11 @@ jobs:
           if [ "${{ needs.setup.outputs.prerelease }}" == "true" ]; then
             cp "$FPK_FILE" "release/$FPK_FILE"
             echo "准备完成: $FPK_FILE"
-          else
-            # 正式版去除版本号
-            NEW_FPK_NAME="TaoSync-${{ matrix.arch }}.fpk"
-            cp "$FPK_FILE" "release/$NEW_FPK_NAME"
-            echo "准备完成: $NEW_FPK_NAME"
+          # else
+          #   # 正式版去除版本号
+          #   NEW_FPK_NAME="TaoSync-${{ matrix.arch }}.fpk"
+          #   cp "$FPK_FILE" "release/$NEW_FPK_NAME"
+          #   echo "准备完成: $NEW_FPK_NAME"
           fi
 
       - name: Upload artifact
@@ -252,16 +253,16 @@ jobs:
         run: |
           mkdir -p combined-release
     
-      - name: Download amd64 artifact
+      - name: Download x86 artifact
         uses: actions/download-artifact@v4
         with:
-          name: fpk-linux-amd64
+          name: fpk-x86
           path: combined-release
 
-      - name: Download arm64 artifact
+      - name: Download arm artifact
         uses: actions/download-artifact@v4
         with:
-          name: fpk-linux-arm64
+          name: fpk-arm
           path: combined-release
 
       - name: Create GitHub Release
