@@ -28,8 +28,8 @@ jobs:
       - name: Set tag and prerelease info
         id: set-tag
         run: |        
-          apt-get update
-          apt-get install -y \
+          sudo apt-get update
+          sudo apt-get install -y \
             curl \
             jq \
             sed
