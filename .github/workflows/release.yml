@@ -27,7 +27,12 @@ jobs:
 
       - name: Set tag and prerelease info
         id: set-tag
-        run: |
+        run: |        
+          apt-get update
+          apt-get install -y \
+            curl \
+            jq \
+            sed
           if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
             TAG="${GITHUB_REF##*/}"
           elif [[ "${GITHUB_REF}" == refs/heads/main ]]; then
@@ -47,6 +52,9 @@ jobs:
           echo "tag=$TAG" >> $GITHUB_OUTPUT
           echo "release_version=$TaoSyncVersion-$BuildVersion" >> $GITHUB_OUTPUT
           echo "prerelease=$PRE" >> $GITHUB_OUTPUT
+          echo "设置发布标签: $TAG"
+          echo "设置发布版本: $TaoSyncVersion-$BuildVersion"
+          echo "预发布: $PRE"
 
   build-amd64:
     needs: setup
