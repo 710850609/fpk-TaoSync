@@ -7,7 +7,7 @@ declare -A PARAMS
 # 默认值
 PARAMS[build_all]="false"
 PARAMS[build_pre]="false"
-PARAMS[arch]="linux-amd64"
+PARAMS[arch]="x86"
 
 # 解析 key=value 格式的参数
 for arg in "$@"; do
@@ -131,15 +131,21 @@ echo "设置构建版本号为: ${fpk_version}"
 
 # platform 取值 x86, arm, all
 platform="x86"
+os_min_version="1.0.0"
 if [ "${arch}" == "x86" ]; then
     platform="x86"
+    os_min_version="1.1.8"
 elif [ "${arch}" == "arm" ]; then
     platform="arm"
+    os_min_version="1.0.2"
 else
     echo "未知的 arch 参数，使用默认值: ${arch}"
+    exit 1
 fi
-echo "设置 platform 为: ${platform}"
+echo "设置 manifest 的 platform 为: ${platform}"
 sed -i "s|^[[:space:]]*platform[[:space:]]*=.*|platform=${platform}|" 'TaoSync/manifest'
+echo "设置 manifest 的 os_min_version 为: ${os_min_version}"
+sed -i "s|^[[:space:]]*os_min_version[[:space:]]*=.*|os_min_version=${os_min_version}|" 'TaoSync/manifest'
 
 echo "开始打包 TaoSync.fpk"
 # fnpack build --directory TaoSync
