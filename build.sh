@@ -101,7 +101,6 @@ else
     echo "已前编译打包前端代码"
 fi
 
-
 if [ "$build_all" == 'all'  ] || [ ! -d "taosync-source/wheels" ];then 
     echo "创建并激活py虚拟环境"
     cd taosync-source
@@ -137,7 +136,9 @@ rsync -a taosync-source/doc/config.ini "${app_script_path}/config.ini" || exit 1
 
 fpk_version="${app_version}-${build_version}"
 if [ "$build_pre" == 'true' ];then 
-    fpk_version="${fpk_version}-pre"
+    cur_time=$(date +"%Y%m%d%H%M%S")
+    echo "当前时间：$cur_time"
+    fpk_version="${fpk_version}-${cur_time}"
 fi
 sed -i "s|^[[:space:]]*version[[:space:]]*=.*|version=${fpk_version}|" 'TaoSync/manifest'
 echo "设置构建版本号为: ${fpk_version}"
@@ -147,9 +148,13 @@ sed -i "s|^[[:space:]]*os_min_version[[:space:]]*=.*|os_min_version=${os_min_ver
 echo "设置 manifest 的 os_min_version 为: ${os_min_version}"
 
 echo "开始打包 TaoSync.fpk"
-# fnpack build --directory TaoSync
-./fnpack.sh build --directory TaoSync
-
+if command -v fnpack >/dev/null 2>&1; then
+    echo "使用系统已安装的 fnpack $(fnpack | grep Version) 进行打包"
+    fnpack build --directory TaoSync/ || { echo "打包失败"; exit 1; }
+else
+    echo "使用本地 fnpack 脚本进行打包"
+    ./fnpack.sh build --directory TaoSync || { echo "打包失败"; exit 1; }
+fi
 
 fpk_name="TaoSync-${fpk_version}-${arch}.fpk"
 rm -f "${fpk_name}"
