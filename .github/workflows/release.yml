@@ -36,7 +36,6 @@ jobs:
             sed
           if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
             TAG="${GITHUB_REF##*/}"
-            TaoSyncVersion="${TAG%-*}"
             BuildVersion="${TAG##*-}"
           elif [[ "${GITHUB_REF}" == refs/heads/main ]]; then
             TaoSyncVersion=$(curl -s https://api.github.com/repos/dr34m-cn/taosync/releases/latest | jq -r .tag_name | sed 's/^v//')
@@ -71,7 +70,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Download source code
-        run:
+        run: |
           echo "下载 TaoSync 源码 $VERSION 版本"
           app_version="$VERSION"
           zip_file="taosync.zip"
@@ -94,7 +93,7 @@ jobs:
 
       - name: Build frontend
         working-directory: taosync-source/web  # 在 web 目录执行
-        run:
+        run: |
           sed -i "s/__version_placeholder__/$VERSION/g" src/locales/zh-CN.yaml
           sed -i "s/__version_placeholder__/$VERSION/g" src/locales/en.yaml
           npm ci
