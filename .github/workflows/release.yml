@@ -319,16 +319,17 @@ jobs:
 #        run: |
 #          mkdir -p combined-release
 
-      - name: Download all artifact
+      - name: Download fpk artifact
         uses: actions/download-artifact@v4
         with:
+          name: fpk
           path: artifacts
 
       - name: Create GitHub Release
         uses: ncipollo/release-action@v1
         with:
           files: |
-            artifacts/*/*.fpk
+            artifacts/*.fpk
           name: ${{ needs.setup.outputs.release_version }}
           tag: ${{ needs.setup.outputs.tag }}
           prerelease: ${{ needs.setup.outputs.prerelease }}
