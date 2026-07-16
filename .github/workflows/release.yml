@@ -89,8 +89,8 @@ jobs:
           name: web-dist
           path: web/dist
 
-  build-amd64:
-    needs: setup
+  build-fpk:
+    needs: [ setup, build-frontend ]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -294,7 +294,7 @@ jobs:
   create-release:
     needs: 
       - setup
-      - build-arch
+      - build-fpk
     runs-on: ubuntu-latest
     steps:
 #      - name: Create release directory
