@@ -68,15 +68,25 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Download source code
+        run:
+          echo "下载 TaoSync 源码"
+          zip_file="taosync.zip"
+          rm -rf taosync-source
+          rm -rf "taosync-${app_version}.zip"
+          wget -O "${zip_file}" "https://github.com/dr34m-cn/taosync/archive/refs/tags/v${app_version}.zip"
+          unzip -q "${zip_file}"
+          mv "taosync-${app_version}" taosync-source
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '22.x'
           cache: 'npm'
-          cache-dependency-path: 'web/package-lock.json'  # 指定路径
+          cache-dependency-path: 'taosync-source/web/package-lock.json'  # 指定路径
 
       - name: Build frontend
-        working-directory: web  # 在 web 目录执行
+        working-directory: taosync-source/web  # 在 web 目录执行
         run:
           sed -i "s/__version_placeholder__/$VERSION/g" src/locales/zh-CN.yaml
           sed -i "s/__version_placeholder__/$VERSION/g" src/locales/en.yaml
