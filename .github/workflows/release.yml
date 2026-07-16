@@ -70,7 +70,7 @@ jobs:
 
       - name: Download source code
         run:
-          echo "下载 TaoSync 源码"
+          echo "下载 TaoSync 源码 $VERSION 版本"
           app_version="$VERSION"
           zip_file="taosync.zip"
           rm -rf taosync-source
@@ -78,6 +78,10 @@ jobs:
           wget -O "${zip_file}" "https://github.com/dr34m-cn/taosync/archive/refs/tags/v${app_version}.zip"
           unzip -q "${zip_file}"
           mv "taosync-${app_version}" taosync-source
+          echo "下载完成，验证目录结构："
+          ls -la taosync-source
+          echo "--- web 子目录 ---"
+          ls -la taosync-source/web 2>/dev/null || echo "警告：taosync-source/web 目录不存在！"
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
