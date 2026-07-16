@@ -71,6 +71,7 @@ jobs:
       - name: Download source code
         run:
           echo "下载 TaoSync 源码"
+          app_version="$VERSION"
           zip_file="taosync.zip"
           rm -rf taosync-source
           rm -rf "taosync-${app_version}.zip"
