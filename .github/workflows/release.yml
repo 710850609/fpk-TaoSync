@@ -60,14 +60,70 @@ jobs:
           echo "设置发布版本: $TaoSyncVersion-$BuildVersion"
           echo "预发布: $PRE"
 
-  build-frontend:
-    runs-on: ubuntu-latest
+#  build-frontend:
+#    runs-on: ubuntu-latest
+#    needs: [ setup ]
+#    env:
+#      VERSION: ${{ needs.setup.outputs.taosync_version }}
+#
+#    steps:
+#      - uses: actions/checkout@v4
+#
+#      - name: Download source code
+#        run: |
+#          echo "下载 TaoSync 源码 $VERSION 版本"
+#          app_version="$VERSION"
+#          zip_file="taosync.zip"
+#          rm -rf taosync-source
+#          rm -rf "taosync-${app_version}.zip"
+#          wget -O "${zip_file}" "https://github.com/dr34m-cn/taosync/archive/refs/tags/v${app_version}.zip"
+#          unzip -q "${zip_file}"
+#          mv "taosync-${app_version}" taosync-source
+#          echo "下载完成，验证目录结构："
+#          ls -la taosync-source
+#          echo "--- web 子目录 ---"
+#          ls -la taosync-source/web 2>/dev/null || echo "警告：taosync-source/web 目录不存在！"
+#
+#      - name: Set up Node.js
+#        uses: actions/setup-node@v4
+#        with:
+#          node-version: '22.x'
+##          cache: 'npm'
+##          cache-dependency-path: 'taosync-source/web/package-lock.json'  # 指定路径
+#
+#      - name: Build frontend
+#        working-directory: taosync-source/web  # 在 web 目录执行
+#        run: |
+#          sed -i "s/__version_placeholder__/$VERSION/g" src/locales/zh-CN.yaml
+#          sed -i "s/__version_placeholder__/$VERSION/g" src/locales/en.yaml
+#          npm ci
+#          npm run build
+#
+#      - name: Upload frontend artifact
+#        uses: actions/upload-artifact@v4
+#        with:
+#          name: web-dist
+#          path: taosync-source/web/dist
+
+  build-fpk:
     needs: [ setup ]
+    runs-on: ubuntu-latest
     env:
       VERSION: ${{ needs.setup.outputs.taosync_version }}
-
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+#      - name: Download frontend artifact
+#        uses: actions/download-artifact@v4
+#        with:
+#          name: web-dist
+#          path: taosync-source/front
 
       - name: Download source code
         run: |
@@ -98,32 +154,6 @@ jobs:
           sed -i "s/__version_placeholder__/$VERSION/g" src/locales/en.yaml
           npm ci
           npm run build
-
-      - name: Upload frontend artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: web-dist
-          path: taosync-source/web/dist
-
-  build-fpk:
-    needs: [ setup, build-frontend ]
-    runs-on: ubuntu-latest
-    env:
-      VERSION: ${{ needs.setup.outputs.taosync_version }}
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-
-      - name: Download frontend artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: web-dist
-          path: taosync-source/front
 
       - name: Run build x86 fpk
         run: |          
