@@ -358,7 +358,7 @@ jobs:
       - name: Create GitHub Release
         uses: ncipollo/release-action@v1
         with:
-          files: |
+          artifacts: |
             artifacts/*.fpk
           name: ${{ needs.setup.outputs.release_version }}
           tag: ${{ needs.setup.outputs.tag }}
