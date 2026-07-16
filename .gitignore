@@ -1,4 +1,5 @@
 taosync-source
+taosync-source-0.3.2
 TaoSync/app/server/*
 taosync.zip
 *.fpk

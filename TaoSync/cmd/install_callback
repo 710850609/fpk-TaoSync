@@ -11,7 +11,7 @@ bash -c "/usr/bin/python3 -m venv ${SCRIPT_PATH}/.venv" >> ${LOG_FILE} 2>&1
 # bash -c "source ${SCRIPT_PATH}/.venv/bin/activate" >> ${LOG_FILE} 2>&1
 
 log_msg "安装离线依赖"
-bash -c "${SCRIPT_PATH}/.venv/bin/pip install --no-index --find-links=${SCRIPT_PATH}/wheels -r ${SCRIPT_PATH}/requirements.txt" >> ${LOG_FILE} 2>&1
+bash -c "${SCRIPT_PATH}/.venv/bin/pip install --no-cache-dir --no-index --find-links=${SCRIPT_PATH}/wheels -r ${SCRIPT_PATH}/requirements.txt" >> ${LOG_FILE} 2>&1
 
 log_msg "创建前端目录引用"
 bash -c "ln -sf ${SCRIPT_PATH}/front  ${DATA_PATH}/front" >> ${LOG_FILE} 2>&1
