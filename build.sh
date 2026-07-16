@@ -1,0 +1,179 @@
+build_version=10
+app_version=$(curl -s https://api.github.com/repos/dr34m-cn/taosync/releases/latest | jq -r .tag_name | sed 's/^v//')
+echo "taosync 版本 ${app_version}"
+#app_version="0.3.3-pre"
+
+declare -A PARAMS
+
+# 默认值
+PARAMS[build_all]="false"
+PARAMS[build_pre]="false"
+PARAMS[arch]="x86"
+
+# 解析 key=value 格式的参数
+for arg in "$@"; do
+  if [[ "$arg" == *=* ]]; then
+    key="${arg%%=*}"
+    value="${arg#*=}"
+    PARAMS["$key"]="$value"
+  else
+    # 处理标志参数
+    case "$arg" in
+      --pre)
+        PARAMS[build_pre]="true"
+        ;;
+      *)
+        echo "忽略未知参数: $arg"
+        ;;
+    esac
+  fi
+done
+
+
+build_all="${PARAMS[build_all]}"
+build_pre="${PARAMS[build_pre]}"
+arch="${PARAMS[arch]}"
+echo "build_all: ${build_all}"
+echo "build_pre: ${build_pre}"
+echo "arch: ${arch}"
+
+# platform 取值 x86, arm, all
+platform="x86"
+os_min_version="1.0.0"
+py_platform="manylinux_2_17_x86_64"
+if [ "${arch}" == "x86" ]; then
+    platform="x86"
+    os_min_version="1.1.8"
+    py_platform="manylinux_2_17_x86_64"
+elif [ "${arch}" == "arm" ]; then
+    platform="arm"
+    os_min_version="1.0.2"
+    py_platform="manylinux_2_17_aarch64"
+else
+    echo "未知的 arch 参数: ${arch}"
+    exit 1
+fi
+
+if [ -d "taosync-source" ];then 
+    # 读已下载源码中的版本
+    versions=$(head -n 1 taosync-source/version.txt)
+    tagList=""
+    IFS=',' read -ra versionList <<< "$versions"
+    cuVersion="${versionList[0]#v}"
+    echo "已下载源码版本: $cuVersion"
+    echo "最新版本: $app_version"
+    if [[ "$cuVersion" < "$app_version" ]]; then
+        echo "已下载源码版本小于最新版本，删除后重新下载"
+        rm -rf taosync-source
+    else
+        echo "源码版本与目标版本相同"
+    fi
+fi
+if [ "$build_all" == 'true' ] || [ ! -d "taosync-source" ];then 
+    echo "下载源码"
+    zip_file="taosync.zip"
+    rm -rf taosync-source
+    rm -rf "taosync-${app_version}"
+    wget -O "${zip_file}" "https://github.com/dr34m-cn/taosync/archive/refs/tags/v${app_version}.zip"
+    unzip -q "${zip_file}"
+    mv "taosync-${app_version}" taosync-source
+else
+    echo "已下载源码"
+fi
+
+
+if [ "$build_all" == 'true' ] || [ ! -d "taosync-source/front" ];then
+    # 建议使用node14
+    # 检查 node 命令是否存在
+    if ! command -v node &> /dev/null; then
+        echo "当前环境未找到 node 命令，设置 node 环境..."
+        node_ver=16
+        export PATH="/var/apps/nodejs_v$node_ver/target/bin:$PATH"
+        echo "已设置 node ${node_ver} 环境"
+    fi
+    echo "打包前端代码"    
+    sed -i "s/__version_placeholder__/$app_version/g" taosync-source/web/src/locales/zh-CN.yaml
+    sed -i "s/__version_placeholder__/$app_version/g" taosync-source/web/src/locales/en.yaml
+    echo "更新前端显示版本号为: $app_version"
+    cd taosync-source/web
+    npm install && npm run build
+    cd ../../
+    rm -rf taosync-source/front
+    mkdir -p taosync-source/front
+    mv taosync-source/web/dist/* taosync-source/front/
+    echo "前端代码编译打包完成"
+else
+    echo "已前编译打包前端代码"
+fi
+
+if [ "$build_all" == 'all'  ] || [ ! -d "taosync-source/wheels" ];then 
+    cd taosync-source
+    rm -rf wheels
+    echo "下载离线包"
+    pip download \
+        --only-binary=:all: \
+        --platform $py_platform \
+        --python-version 311 \
+        -r requirements.txt \
+        -d wheels
+    cd ../
+    # 下载 wheel 到本地
+    echo "编译打包后端代码完成"
+else
+    echo "已前编译打包后端代码"
+fi
+
+
+echo "写入app"
+app_script_path="TaoSync/app/server"
+rm -rf "${app_script_path}"
+# rsync -a taosync-source/  "${app_script_path}/"    
+rsync -a \
+    --exclude='.venv' \
+    --exclude='.github' \
+    --exclude='data' \
+    --exclude='doc' \
+    --exclude='dockerfiles' \
+    --exclude='frontend' \
+    --exclude='web' \
+    --exclude='README' \
+    --exclude='Dockerfile' \
+    --exclude='LICENSE' \
+    --exclude='main_android.py' \
+    --exclude='.gitignore' \
+    --exclude='version.txt' \
+    --exclude='*.spec' \
+    --exclude='*.md' \
+    --exclude='*.ico' \
+    --exclude='*.ai' \
+    taosync-source/  "${app_script_path}/"  || exit 1
+rsync update_admin.py "${app_script_path}/" || exit 1
+rsync -a taosync-source/doc/config.ini "${app_script_path}/config.ini" || exit 1
+
+
+fpk_version="${app_version}-${build_version}"
+if [ "$build_pre" == 'true' ];then 
+    cur_time=$(date +"%Y%m%d%H%M%S")
+    echo "当前时间：$cur_time"
+    fpk_version="${fpk_version}-${cur_time}"
+fi
+sed -i "s|^[[:space:]]*version[[:space:]]*=.*|version=${fpk_version}|" 'TaoSync/manifest'
+echo "设置构建版本号为: ${fpk_version}"
+sed -i "s|^[[:space:]]*platform[[:space:]]*=.*|platform=${platform}|" 'TaoSync/manifest'
+echo "设置 manifest 的 platform 为: ${platform}"
+sed -i "s|^[[:space:]]*os_min_version[[:space:]]*=.*|os_min_version=${os_min_version}|" 'TaoSync/manifest'
+echo "设置 manifest 的 os_min_version 为: ${os_min_version}"
+
+echo "开始打包 TaoSync.fpk"
+if command -v fnpack >/dev/null 2>&1; then
+    echo "使用系统已安装的 fnpack $(fnpack | grep Version) 进行打包"
+    fnpack build --directory TaoSync/ || { echo "打包失败"; exit 1; }
+else
+    echo "使用本地 fnpack 脚本进行打包"
+    ./fnpack.sh build --directory TaoSync || { echo "打包失败"; exit 1; }
+fi
+
+fpk_name="TaoSync-${fpk_version}-${arch}.fpk"
+rm -f "${fpk_name}"
+mv TaoSync.fpk "${fpk_name}"
+echo "打包完成: ${fpk_name}"
