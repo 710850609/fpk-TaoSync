@@ -36,6 +36,8 @@ jobs:
             sed
           if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
             TAG="${GITHUB_REF##*/}"
+            TaoSyncVersion="${TAG%-*}"
+            BuildVersion="${TAG##*-}"
           elif [[ "${GITHUB_REF}" == refs/heads/main ]]; then
             TaoSyncVersion=$(curl -s https://api.github.com/repos/dr34m-cn/taosync/releases/latest | jq -r .tag_name | sed 's/^v//')
             BuildVersion=$(sed -n 's/^[[:space:]]*build_version[[:space:]]*=[[:space:]]*\([^#[:space:]]*\).*/\1/p' "build.sh" | head -n1)
