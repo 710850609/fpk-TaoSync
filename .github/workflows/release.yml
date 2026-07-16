@@ -355,6 +355,17 @@ jobs:
           name: fpk
           path: artifacts
 
+      - name: Validate fpk artifacts
+        run: |
+          fpk_count=$(ls artifacts/*.fpk 2>/dev/null | wc -l)
+          echo "找到 ${fpk_count} 个 fpk 文件："
+          ls -la artifacts/*.fpk
+          if [ "$fpk_count" -ne 2 ]; then
+            echo "错误：期望 2 个 fpk 文件（x86 + arm），实际找到 ${fpk_count} 个"
+            exit 1
+          fi
+          echo "fpk 文件数量验证通过"
+
       - name: Create GitHub Release
         uses: ncipollo/release-action@v1
         with:
