@@ -154,11 +154,11 @@ jobs:
           sed -i "s/__version_placeholder__/$VERSION/g" src/locales/en.yaml
           npm ci
           npm run build
-          rm -rf ../../front
-          mkdir -p ../../front
-          mv dist/* ../../front/
+          rm -rf ../front
+          mkdir -p ../front
+          mv dist/* ../front/
           echo "编译完成，验证 taosync-source  目录结构："
-          ls -la ../../
+          ls -la ../
 
       - name: Ensure shell can run
         run: |          
