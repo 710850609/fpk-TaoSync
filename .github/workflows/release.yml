@@ -374,16 +374,30 @@ jobs:
           fi
           echo "fpk 文件数量验证通过"
 
+#      - name: Create GitHub Release
+#        uses: ncipollo/release-action@v1
+#        with:
+#          artifacts: |
+#            artifacts/*.fpk
+#          name: ${{ needs.setup.outputs.release_version }}
+#          tag: ${{ needs.setup.outputs.tag }}
+#          prerelease: ${{ needs.setup.outputs.prerelease }}
+#          skipIfReleaseExists: true
+#          token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Create GitHub Release
-        uses: ncipollo/release-action@v1
+        uses: Wandalen/wretry.action@v3
         with:
-          artifacts: |
-            artifacts/*.fpk
-          name: ${{ needs.setup.outputs.release_version }}
-          tag: ${{ needs.setup.outputs.tag }}
-          prerelease: ${{ needs.setup.outputs.prerelease }}
-          skipIfReleaseExists: true
-          token: ${{ secrets.GITHUB_TOKEN }}
+          action: ncipollo/release-action@v1
+          with: |
+            artifacts: artifacts/*.fpk
+            name: ${{ needs.setup.outputs.release_version }}
+            tag: ${{ needs.setup.outputs.tag }}
+            prerelease: ${{ needs.setup.outputs.prerelease }}
+            skipIfReleaseExists: true
+            token: ${{ secrets.GITHUB_TOKEN }}
+          attempt_limit: 5
+          attempt_delay: 10000  # 10秒间隔
 
       - name: Upload release summary
         if: always()
