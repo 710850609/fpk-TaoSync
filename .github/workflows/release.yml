@@ -154,17 +154,25 @@ jobs:
           sed -i "s/__version_placeholder__/$VERSION/g" src/locales/en.yaml
           npm ci
           npm run build
+          rm -rf ../../front
+          mkdir -p ../../front
+          mv dist/* ../../front/
+          echo "编译完成，验证 taosync-source  目录结构："
+          ls -la ../../
 
-      - name: Run build x86 fpk
+      - name: Ensure shell can run
         run: |          
           chmod +x ./fnpack.sh 2>/dev/null || true
           chmod +x ./build.sh 2>/dev/null || true
+        
+
+      - name: Run build x86 fpk
+        run: |          
           ./build.sh  arch=x86 build_pre="${{ needs.setup.outputs.prerelease }}" 2>/dev/null || true
 
       - name: Run build arm fpk
         run: |          
-          chmod +x ./fnpack.sh 2>/dev/null || true
-          chmod +x ./build.sh 2>/dev/null || true
+          rm -rf taosync-source/wheels
           ./build.sh  arch=arm build_pre="${{ needs.setup.outputs.prerelease }}" 2>/dev/null || true
 
       - name: Prepare artifact
