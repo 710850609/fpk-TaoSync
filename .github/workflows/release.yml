@@ -394,7 +394,9 @@ jobs:
             name: ${{ needs.setup.outputs.release_version }}
             tag: ${{ needs.setup.outputs.tag }}
             prerelease: ${{ needs.setup.outputs.prerelease }}
-            skipIfReleaseExists: true
+            skipIfReleaseExists: false      # ← 改为 false
+            replacesArtifacts: true         # ← 允许覆盖已有 artifacts
+            allowUpdates: true              # ← 允许更新已有 release
             token: ${{ secrets.GITHUB_TOKEN }}
           attempt_limit: 5
           attempt_delay: 10000  # 10秒间隔
