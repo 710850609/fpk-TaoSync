@@ -40,15 +40,15 @@ echo "arch: ${arch}"
 # platform 取值 x86, arm, all
 platform="x86"
 os_min_version="1.0.0"
-py_platform="manylinux_2_17_x86_64"
+py_platforms=("manylinux_2_17_x86_64" "manylinux_2_28_x86_64" "manylinux_2_34_x86_64")
 if [ "${arch}" == "x86" ]; then
     platform="x86"
     os_min_version="1.1.8"
-    py_platform="manylinux_2_17_x86_64"
+    py_platforms=("manylinux_2_17_x86_64" "manylinux_2_28_x86_64" "manylinux_2_34_x86_64")
 elif [ "${arch}" == "arm" ]; then
     platform="arm"
     os_min_version="1.0.2"
-    py_platform="manylinux_2_17_aarch64"
+    py_platforms=("manylinux_2_17_aarch64" "manylinux_2_28_aarch64" "manylinux_2_34_aarch64")
 else
     echo "未知的 arch 参数: ${arch}"
     exit 1
@@ -112,7 +112,9 @@ if [ "$build_all" == 'all'  ] || [ ! -d "taosync-source/wheels" ];then
     echo "下载离线包"
     pip download \
         --only-binary=:all: \
-        --platform $py_platform \
+        --platform "${py_platforms[0]}" \
+        --platform "${py_platforms[1]}" \
+        --platform "${py_platforms[2]}" \
         --python-version 311 \
         -r requirements.txt \
         -d wheels
